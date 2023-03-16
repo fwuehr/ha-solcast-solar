@@ -7,6 +7,7 @@ DOMAIN = "solcast_solar"
 SOLCAST_URL = "https://api.solcast.com.au"
 
 CONST_DISABLEAUTOPOLL = "const_disableautopoll"
+CONST_AVAILABLEAPIREQUESTS = "const_availableapirequests"
 
 ATTR_ENTRY_TYPE: Final = "entry_type"
 ENTRY_TYPE_SERVICE: Final = "service"

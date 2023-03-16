@@ -27,7 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 class SolcastUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from Solcast Solar API."""
 
-    def __init__(self, hass: HomeAssistant, solcast: SolcastApi) -> None:
+    def __init__(self, hass: HomeAssistant, solcast: SolcastApi, availableapirequests) -> None:
         """Initialize."""
         self.solcast = solcast
         self._hass = hass
@@ -35,6 +35,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
         self._starthour = 6
         self._finishhour = 19
         self._previousenergy = None
+        self._availableapirequests = availableapirequests
 
         self._v = f"{MAJOR_VERSION}.{MINOR_VERSION}"
 
@@ -44,6 +45,10 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             name=DOMAIN,
         )
 
+    def calcRefreshInterval(self):
+        """Calculate interval how often data will be retrieved from Solcast API based on available Requests"""
+        self._refreshIntervalSec = round(86400 / self._availableapirequests)
+        return self._refreshIntervalSec
 
     async def _async_update_data(self):
         """Update data via library."""
@@ -69,6 +74,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.error("Solcast - Error resetting past data")
 
     async def setup(self, autopolldisabled=False):
+        calcRefreshInterval()
         try:
             await get_instance(self._hass).async_add_executor_job(self.gethistory)
             if autopolldisabled:
@@ -89,7 +95,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             location, elevation = get_astral_location(self._hass)
             next_setting = get_location_astral_event_next(
                 location, elevation, SUN_EVENT_SUNSET, dt_util.utcnow()
-            ) + timedelta(hours=1)
+            ) + timedelta(seconds=self._refreshIntervalSec)
             
             self._finishhour= next_setting.astimezone().hour # already one hour ahead
             

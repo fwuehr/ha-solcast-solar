@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.device_registry import async_get as device_registry
 
-from .const import DOMAIN, SOLCAST_URL, CONST_DISABLEAUTOPOLL, SERVICE_UPDATE, SERVICE_CLEAR_DATA
+from .const import DOMAIN, SOLCAST_URL, CONST_DISABLEAUTOPOLL, CONST_AVAILABLEAPIREQUESTS, SERVICE_UPDATE, SERVICE_CLEAR_DATA
 from .coordinator import SolcastUpdateCoordinator
 from .solcastapi import ConnectionOptions, SolcastApi
 
@@ -32,10 +32,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         solcast = SolcastApi(aiohttp_client.async_get_clientsession(hass), options)
         await solcast.sites_data()
         await solcast.load_saved_data()
-        
-        coordinator = SolcastUpdateCoordinator(hass, solcast)
+        availableapirequests = entry.options[CONST_AVAILABLEAPIREQUESTS]
+        coordinator = SolcastUpdateCoordinator(hass, solcast, availableapirequests)
         autopolldisabled = entry.options[CONST_DISABLEAUTOPOLL]
-        await coordinator.setup(autopolldisabled)
+        await coordinator.setup(autopolldisabled, availableapirequests)
 
         await coordinator.async_config_entry_first_refresh()
         #await _async_migrate_unique_ids(hass, entry, coordinator)
